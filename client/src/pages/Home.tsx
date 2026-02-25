@@ -235,10 +235,9 @@ export default function Home() {
   };
 
   // =========================
-  // ✅ BGM/SFX (오디오 효과)
+  // ✅ BGM/SFX (오디오 효과) — 통합(soundOn)
   // =========================
-  const [bgmOn, setBgmOn] = useState(true);
-  const [sfxOn, setSfxOn] = useState(true);
+  const [soundOn, setSoundOn] = useState(true); // ✅ BGM+SFX 통합 토글
   const [audioUnlocked, setAudioUnlocked] = useState(false);
 
   const bgmRef = useRef<HTMLAudioElement | null>(null);
@@ -292,7 +291,7 @@ export default function Home() {
   };
 
   const playSfx = (key: "click" | "reveal" | "tick" | "dawn" | "gavel") => {
-    if (!sfxOn) return;
+    if (!soundOn) return; // ✅ 통합
     if (!audioUnlocked) return;
 
     const a = sfxRef.current[key];
@@ -308,7 +307,7 @@ export default function Home() {
     const bgm = bgmRef.current;
     if (!bgm) return;
 
-    if (!bgmOn || !audioUnlocked || kind === "OFF") {
+    if (!soundOn || !audioUnlocked || kind === "OFF") {
       bgm.pause();
       return;
     }
@@ -338,7 +337,7 @@ export default function Home() {
       phase === "NIGHT_SUMMARY";
 
     void setBgmKind(isNight ? "NIGHT" : "LOBBY");
-  }, [phase, audioUnlocked, bgmOn]);
+  }, [phase, audioUnlocked, soundOn]);
 
   // ✅ role briefing 자동 반영
   const rolePlan = useMemo(() => recommendedRoles(playerCount), [playerCount]);
@@ -906,6 +905,8 @@ export default function Home() {
             <button
               onClick={async () => {
                 setTtsOn(true);
+                // ✅ 음성 시작을 누르면 사운드도 ON으로 맞춤(선호)
+                setSoundOn(true);
                 unlockTTS();
                 await unlockAudio();
                 await setBgmKind("LOBBY");
@@ -928,28 +929,34 @@ export default function Home() {
               {ttsOn ? "🔊 음성 ON" : "🔇 음성 OFF"}
             </button>
 
+            {/* ✅ BGM + SFX 통합 토글 */}
             <button
               onClick={() => {
+                // OFF로 바꿀 때도 클릭음 들리게: 토글 전에 한 번
                 playSfx("click");
-                setBgmOn((v) => {
+                setSoundOn((v) => {
                   const next = !v;
+
+                  // ✅ 꺼질 때: BGM 즉시 정지
                   if (!next) void setBgmKind("OFF");
+
+                  // ✅ 켜질 때: 현재 phase에 맞는 BGM 재생(언락 상태일 때만)
+                  if (next && audioUnlocked) {
+                    const isNight =
+                      phase === "NIGHT_HANDOFF" ||
+                      phase === "NIGHT_MAFIA" ||
+                      phase === "NIGHT_DOCTOR" ||
+                      phase === "NIGHT_POLICE" ||
+                      phase === "NIGHT_SUMMARY";
+                    void setBgmKind(isNight ? "NIGHT" : "LOBBY");
+                  }
+
                   return next;
                 });
               }}
               className="text-xs px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10"
             >
-              {bgmOn ? "🎵 BGM ON" : "🎵 BGM OFF"}
-            </button>
-
-            <button
-              onClick={() => {
-                playSfx("click");
-                setSfxOn((v) => !v);
-              }}
-              className="text-xs px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10"
-            >
-              {sfxOn ? "🔔 SFX ON" : "🔕 SFX OFF"}
+              {soundOn ? "🔊 사운드 ON" : "🔇 사운드 OFF"}
             </button>
           </div>
 
