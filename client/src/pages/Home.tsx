@@ -127,17 +127,14 @@ export default function Home() {
   // ✅ 의사 셀프힐 1회 제한
   const [doctorSelfHealUsed, setDoctorSelfHealUsed] = useState(false);
 
-  // ✅ 밤 액션용(마피아/의사/경찰)
-  const [mafiaTarget, setMafiaTarget] = useState<string>("");
-  const [doctorTarget, setDoctorTarget] = useState<string>("");
-  const [policeTarget, setPoliceTarget] = useState<string>("");
-  const [policeResult, setPoliceResult] = useState<string>("");
-
-  // ✅ 밤 결과(한 번에 적용해서 “동시에 일어난 것처럼”)
+  // ✅ 밤 액션 결과(한 번에 적용해서 “동시에 일어난 것처럼”)
   const [pendingKill, setPendingKill] = useState<string | null>(null);
   const [pendingHeal, setPendingHeal] = useState<string | null>(null);
 
-  // ✅ 밤 턴(순서 관리용)
+  // ✅ 경찰 결과(이 화면에서만 표시)
+  const [policeResult, setPoliceResult] = useState<string>("");
+
+  // ✅ 밤 진행 순서 트래킹
   const [nightTurn, setNightTurn] = useState<"MAFIA" | "DOCTOR" | "POLICE">(
     "MAFIA",
   );
@@ -462,31 +459,6 @@ export default function Home() {
     return "SUMMARY";
   };
 
-  const goNightPhase = (turn: "MAFIA" | "DOCTOR" | "POLICE") => {
-    setNightTurn(turn);
-
-    if (turn === "MAFIA") {
-      setPhase("NIGHT_MAFIA");
-      speak(
-        "밤이 되었습니다. 모두 눈을 감고 고개를 숙인 뒤 손가락 하나씩 화면에 대세요. 마피아만 제거할 대상을 빠르게 터치하세요.",
-      );
-      return;
-    }
-
-    if (turn === "DOCTOR") {
-      setPhase("NIGHT_DOCTOR");
-      speak(
-        "의사 차례입니다. 모두 눈을 감고 고개를 숙인 뒤 손가락 하나씩 화면에 대세요. 의사만 치료할 대상을 빠르게 터치하세요.",
-      );
-      return;
-    }
-
-    setPhase("NIGHT_POLICE");
-    speak(
-      "경찰 차례입니다. 모두 눈을 감고 고개를 숙인 뒤 손가락 하나씩 화면에 대세요. 경찰만 조사할 대상을 빠르게 터치하세요.",
-    );
-  };
-
   const startGame = () => {
     playSfx("click");
     if (playerCount < 2) return;
@@ -511,10 +483,6 @@ export default function Home() {
     setLastExecuted(null);
 
     setPoliceResult("");
-    setMafiaTarget("");
-    setDoctorTarget("");
-    setPoliceTarget("");
-
     setPendingKill(null);
     setPendingHeal(null);
 
@@ -666,29 +634,37 @@ export default function Home() {
     setLastExecuted(null);
   };
 
-  // ====== ✅ 사회자 없는 “밤 액션 플로우” ======
+  // ====== ✅ 사회자 없는 “밤 액션 플로우”(시작 버튼 없이 바로 선택 화면) ======
   const beginNight = () => {
     playSfx("click");
     if (gameOver) return;
 
     setPendingKill(null);
     setPendingHeal(null);
-    setMafiaTarget("");
-    setDoctorTarget("");
-    setPoliceTarget("");
     setPoliceResult("");
 
-    // ✅ 결과 화면에서 "밤 시작" 누르면: 바로 첫 역할 화면(시작 버튼 없이)
+    // ✅ 공통 나레이션(요청 문구)
+    speak(
+      "밤이 시작됩니다. 모두 눈을 감고, 고개를 숙인 후 손가락 하나씩 휴대폰 화면에 대세요.",
+    );
+
+    // ✅ 바로 첫 역할 화면으로 이동
     if (mafiaAlive) {
-      goNightPhase("MAFIA");
+      setNightTurn("MAFIA");
+      setPhase("NIGHT_MAFIA");
+      speak("마피아는 제거할 대상을 빠르게 터치하세요.");
       return;
     }
     if (doctorAlive) {
-      goNightPhase("DOCTOR");
+      setNightTurn("DOCTOR");
+      setPhase("NIGHT_DOCTOR");
+      speak("의사는 치료할 대상을 빠르게 터치하세요.");
       return;
     }
     if (policeAlive) {
-      goNightPhase("POLICE");
+      setNightTurn("POLICE");
+      setPhase("NIGHT_POLICE");
+      speak("경찰은 조사할 대상을 빠르게 터치하세요.");
       return;
     }
 
@@ -706,13 +682,19 @@ export default function Home() {
     speak("선택 완료.");
 
     const next = nextNightTurn("MAFIA");
-    setMafiaTarget("");
-
     if (next === "SUMMARY") {
       setPhase("NIGHT_SUMMARY");
       speak("밤 행동이 모두 종료되었습니다. 밤 결과를 적용하고 낮을 시작하세요.");
+      return;
+    }
+
+    setNightTurn(next);
+    if (next === "DOCTOR") {
+      setPhase("NIGHT_DOCTOR");
+      speak("의사 차례입니다. 치료할 대상을 빠르게 터치하세요.");
     } else {
-      goNightPhase(next);
+      setPhase("NIGHT_POLICE");
+      speak("경찰 차례입니다. 조사할 대상을 빠르게 터치하세요.");
     }
   };
 
@@ -734,14 +716,16 @@ export default function Home() {
     speak("선택 완료.");
 
     const next = nextNightTurn("DOCTOR");
-    setDoctorTarget("");
-
     if (next === "SUMMARY") {
       setPhase("NIGHT_SUMMARY");
       speak("밤 행동이 모두 종료되었습니다. 밤 결과를 적용하고 낮을 시작하세요.");
-    } else {
-      goNightPhase(next);
+      return;
     }
+
+    // 다음은 경찰
+    setNightTurn("POLICE");
+    setPhase("NIGHT_POLICE");
+    speak("경찰 차례입니다. 조사할 대상을 빠르게 터치하세요.");
   };
 
   const policeTapTarget = (p: string) => {
@@ -756,9 +740,6 @@ export default function Home() {
     setPoliceResult(msg);
     setLastEvent(msg);
     speak(msg);
-
-    setPoliceTarget("");
-    // 경찰은 결과 확인 버튼(“확인 완료 · 밤 종료로”)으로 NIGHT_SUMMARY 이동
   };
 
   const applyNightOutcome = () => {
@@ -823,9 +804,6 @@ export default function Home() {
     setLastExecuted(null);
     setDoctorSelfHealUsed(false);
 
-    setMafiaTarget("");
-    setDoctorTarget("");
-    setPoliceTarget("");
     setPoliceResult("");
 
     setPendingKill(null);
@@ -1460,18 +1438,15 @@ export default function Home() {
             </div>
           )}
 
-          {/* ====== 밤 액션: 마피아 (바로 선택) ====== */}
+          {/* ====== 밤 액션: 마피아 (시작 버튼 없이 바로 선택) ====== */}
           {phase === "NIGHT_MAFIA" && (
             <div className={"mt-6 " + glowCard + " p-4"}>
               <h2 className="font-bold text-lg">🌙 마피아 행동</h2>
-
-              <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4">
-                <div className="text-white/80 text-sm leading-relaxed">
-                  ✅ 모두 눈을 감고 고개를 숙인 뒤, 손가락 하나씩 화면에 대세요. <br />
-                  <span className="text-white font-semibold">마피아만</span> 제거할 대상을
-                  빠르게 터치합니다.
-                </div>
-              </div>
+              <p className="text-sm text-white/70 mt-1">
+                모두 손가락을 화면에 올려두고,{" "}
+                <span className="text-white font-semibold">마피아만</span> 제거할 대상을
+                누릅니다.
+              </p>
 
               <div className="mt-4 space-y-2">
                 {alivePlayers.map((p) => (
@@ -1490,21 +1465,15 @@ export default function Home() {
             </div>
           )}
 
-          {/* ====== 밤 액션: 의사 (바로 선택) ====== */}
+          {/* ====== 밤 액션: 의사 (시작 버튼 없이 바로 선택) ====== */}
           {phase === "NIGHT_DOCTOR" && (
             <div className={"mt-6 " + glowCard + " p-4"}>
               <h2 className="font-bold text-lg">💉 의사 행동</h2>
-
-              <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4">
-                <div className="text-white/80 text-sm leading-relaxed">
-                  ✅ 모두 눈을 감고 고개를 숙인 뒤, 손가락 하나씩 화면에 대세요. <br />
-                  <span className="text-white font-semibold">의사만</span> 치료할 대상을
-                  빠르게 터치합니다.
-                </div>
-                <div className="mt-3 text-xs text-white/50">
-                  * 의사 본인 치료는 게임당 1회 제한입니다.
-                </div>
-              </div>
+              <p className="text-sm text-white/70 mt-1">
+                모두 손가락을 화면에 올려두고,{" "}
+                <span className="text-white font-semibold">의사만</span> 치료할 대상을
+                누릅니다. (본인 치료는 게임당 1회)
+              </p>
 
               <div className="mt-4 space-y-2">
                 {players.map((p) => (
@@ -1522,9 +1491,7 @@ export default function Home() {
                     </div>
                     {p === doctorPlayer && (
                       <div className="text-xs text-white/50 mt-1">
-                        {doctorSelfHealUsed
-                          ? "본인 치료 사용됨"
-                          : "본인 치료 가능(1회)"}
+                        {doctorSelfHealUsed ? "본인 치료 사용됨" : "본인 치료 가능(1회)"}
                       </div>
                     )}
                   </button>
@@ -1533,10 +1500,15 @@ export default function Home() {
             </div>
           )}
 
-          {/* ====== 밤 액션: 경찰 (바로 선택) ====== */}
+          {/* ====== 밤 액션: 경찰 (시작 버튼 없이 바로 선택) ====== */}
           {phase === "NIGHT_POLICE" && (
             <div className={"mt-6 " + glowCard + " p-4"}>
               <h2 className="font-bold text-lg">🔎 경찰 행동</h2>
+              <p className="text-sm text-white/70 mt-1">
+                모두 손가락을 화면에 올려두고,{" "}
+                <span className="text-white font-semibold">경찰만</span> 조사 대상을
+                누릅니다. 결과는 이 화면에서만 표시됩니다.
+              </p>
 
               {policeResult ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4">
@@ -1555,33 +1527,20 @@ export default function Home() {
                   </button>
                 </div>
               ) : (
-                <>
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4">
-                    <div className="text-white/80 text-sm leading-relaxed">
-                      ✅ 모두 눈을 감고 고개를 숙인 뒤, 손가락 하나씩 화면에 대세요. <br />
-                      <span className="text-white font-semibold">경찰만</span> 조사할 대상을
-                      빠르게 터치합니다.
-                    </div>
-                    <div className="mt-3 text-xs text-white/50">
-                      * 결과는 이 화면에서만 표시됩니다.
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    {alivePlayers.map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => policeTapTarget(p)}
-                        className={bigChoiceBtn}
-                      >
-                        <div className="text-sm text-white/60">
-                          조사 대상 선택 (경찰만)
-                        </div>
-                        <div className="text-lg font-extrabold">{p}</div>
-                      </button>
-                    ))}
-                  </div>
-                </>
+                <div className="mt-4 space-y-2">
+                  {alivePlayers.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => policeTapTarget(p)}
+                      className={bigChoiceBtn}
+                    >
+                      <div className="text-sm text-white/60">
+                        조사 대상 선택 (경찰만)
+                      </div>
+                      <div className="text-lg font-extrabold">{p}</div>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           )}
