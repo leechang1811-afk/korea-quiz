@@ -1,0 +1,8 @@
+{
+  "id": "0000_init",
+  "prevId": "0000",
+  "version": "5",
+  "dialect": "postgresql",
+  "tables": {},
+  "enums": {}
+}
