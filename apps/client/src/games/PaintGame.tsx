@@ -413,7 +413,7 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                 </motion.div>
               )}
 
-              {/* Falling zone - 터치 영역 확대, onPointerDown으로 즉시 반응 */}
+              {/* Falling zone - 모바일 터치 영역 확대 (최소 48px), onPointerDown 즉시 반응 */}
               <div className="relative h-[380px] bg-slate-100 border border-dashed border-toss-border rounded-lg overflow-hidden" style={{ touchAction: 'manipulation' }}>
                 <AnimatePresence>
                   {fallingDrops.map((d) => (
@@ -421,17 +421,6 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                       key={d.id}
                       role="button"
                       tabIndex={0}
-                      className={`absolute w-11 h-14 shadow-md select-none ${
-                        isLightColor(d.color) ? 'border-2 border-slate-400 ring-1 ring-slate-400/60' : 'border border-white/50'
-                      } ${!bursting ? 'cursor-pointer hover:scale-110 active:scale-95 transition-transform' : ''}`}
-                      style={{
-                        left: d.x,
-                        top: 0,
-                        backgroundColor: COLOR_HEX[d.color],
-                        ...TEARDROP_STYLE,
-                        WebkitTapHighlightColor: 'transparent',
-                        touchAction: 'manipulation',
-                      }}
                       initial={{ y: 0, scale: 1, opacity: 1 }}
                       animate={
                         bursting
@@ -443,6 +432,22 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                           ? { duration: 0.35, ease: 'easeOut' }
                           : { duration: params.fallDurationSec, ease: 'linear' }
                       }
+                      onAnimationComplete={() => !bursting && handleDropMissed(d.id)}
+                      className="absolute"
+                      style={{
+                        left: d.x,
+                        top: 0,
+                        width: 72,
+                        height: 80,
+                        marginLeft: -14,
+                        marginTop: -12,
+                        touchAction: 'manipulation',
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitTouchCallout: 'none',
+                        userSelect: 'none',
+                        cursor: bursting ? 'default' : 'pointer',
+                        zIndex: 10,
+                      }}
                       onPointerDown={(e) => {
                         if (bursting) return;
                         e.preventDefault();
@@ -453,8 +458,19 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                         e.preventDefault();
                         e.stopPropagation();
                       }}
-                      onAnimationComplete={() => !bursting && handleDropMissed(d.id)}
-                    />
+                    >
+                      <div
+                        className={`w-11 h-14 shadow-md select-none pointer-events-none ${
+                          isLightColor(d.color) ? 'border-2 border-slate-400 ring-1 ring-slate-400/60' : 'border border-white/50'
+                        }`}
+                        style={{
+                          marginLeft: 14,
+                          marginTop: 12,
+                          backgroundColor: COLOR_HEX[d.color],
+                          ...TEARDROP_STYLE,
+                        }}
+                      />
+                    </motion.div>
                   ))}
                 </AnimatePresence>
               </div>
