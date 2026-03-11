@@ -135,7 +135,8 @@ export default function Run() {
   if (!run) {
     if (lastCompletedRun) return null;
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-2 border-toss-blue border-t-transparent rounded-full animate-spin" />
         <p className="text-toss-sub">준비 중...</p>
       </div>
     );

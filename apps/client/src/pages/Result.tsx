@@ -13,18 +13,18 @@ import { fireChampion, fireNewBest } from '../utils/confetti';
 import type { RunSubmitResponse } from '../services/api';
 
 const HERO_SUBTEXT_OPTIONS = [
-  '한국인 중 상위권! 🏆',
+  '내 두뇌 상위권! 🏆',
   '한국인 대비 괜찮은 편! 👍',
   '한국인보다 잘했어요! 🎯',
 ];
 
 // Variable reward: 랜덤 칭찬/동기 문구
 const VARIABLE_PRAISE_OPTIONS = [
-  '계속 도전하면 점점 상위권에 가까워져요. You got this! 🎯',
-  '매일 한 번씩만 해도 실력이 쑥쑥. 내일 또 와요!',
-  '한국인 상위권은 꾸준함의 결과. 오늘도 수고했어요!',
+  '계속 도전하면 점점 상위권에 가까워져요. 할 수 있어요! 🎯',
+  '매일 한 번씩만 해도 실력이 쑥쑥. 내일도 도전해 보세요!',
+  '두뇌 건강은 꾸준함의 결과예요. 오늘도 수고했어요!',
   '다음엔 더 잘할 수 있어요. 자신감을 갖고!',
-  '리더보드 1위를 노려보세요. 당신도 할 수 있어요!',
+  '순위표 1위를 노려보세요. 당신도 할 수 있어요!',
 ];
 
 function computeMyPerTypeSuccess(perStageResults: { game_type: string; success: boolean }[]): Record<string, { successes: number; total: number; rate: number }> {
@@ -208,7 +208,7 @@ export default function Result() {
               </p>
               {streak > 0 && (
                 <p className={`mt-1 text-sm font-medium ${lastCompletedRun.maxLevel === 20 ? 'text-amber-700' : 'text-white/90'}`}>
-                  🔥 {streak}일 연속!
+                  🔥 두뇌 건강 지키기 {streak}일차
                 </p>
               )}
               {/* Share - 컴팩트 */}

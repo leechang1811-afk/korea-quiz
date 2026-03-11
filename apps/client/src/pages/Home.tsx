@@ -40,13 +40,13 @@ export default function Home() {
         className="text-center max-w-md w-full"
       >
         <h1 className="text-2xl md:text-3xl font-bold text-toss-text mb-3 leading-tight">
-          나는 한국인 중 상위 몇%?
+          내 두뇌 점수는 상위 몇%?
         </h1>
         <p className="text-toss-text text-base mb-2 font-medium">
           두뇌 게임 5가지로 실력을 테스트해보세요
         </p>
         <p className="text-toss-sub text-sm mb-6 leading-relaxed">
-          반응속도, 기억력, 계산 등 5분이면 결과 확인 · 한국인 평균과 비교해 드려요
+          민첩성, 순발력, 집중력 등 5분이면 결과 확인 · 한국인 평균과 비교해 드려요
         </p>
 
         {/* Streak badge - Investment 표시 */}
@@ -61,18 +61,14 @@ export default function Home() {
             }`}
           >
             <span>🔥</span>
-            <span>
-              {streakAtRisk
-                ? `${streakCount}일 연속! 오늘 안 하면 끊겨요`
-                : `${streakCount}일 연속 도전 중!`}
-            </span>
+            <span>내 두뇌 건강 지키기 {streakCount}일차</span>
           </motion.div>
         )}
 
         {/* Trigger 메시지 - Loss aversion / Scarcity / Curiosity */}
         {streakAtRisk && (
           <p className="text-red-600 text-sm font-medium mb-4">
-            지금 도전하면 {streakCount + 1}일 연속 달성!
+            지금 도전하면 {streakCount + 1}일차 달성!
           </p>
         )}
         {!playedToday && !canExtend && streakCount === 0 && (
@@ -89,11 +85,11 @@ export default function Home() {
         <div className="text-toss-sub text-sm mb-6 bg-toss-bg rounded-xl py-4 px-5 text-left">
           <p className="font-medium text-toss-text mb-2">게임 내용</p>
           <ul className="space-y-1 text-sm">
-            <li>① 반응 속도</li>
-            <li>② 시간 맞추기</li>
-            <li>③ 기억력</li>
-            <li>④ 계산</li>
-            <li>⑤ 물감 색깔 (색 혼합 추론)</li>
+            <li>① 민첩성</li>
+            <li>② 순발력</li>
+            <li>③ 집중력</li>
+            <li>④ 논리력</li>
+            <li>⑤ 시각 추론</li>
           </ul>
         </div>
 
@@ -107,11 +103,11 @@ export default function Home() {
               : 'bg-toss-blue shadow-toss-blue/25 hover:shadow-toss-blue/40'
           }`}
         >
-          {streakAtRisk ? '🔥 스트릭 지키기!' : playedToday ? '한 번 더 도전!' : '시작하기'}
+          {streakAtRisk ? '🔥 오늘도 지키기!' : playedToday ? '한 번 더 도전!' : '시작하기'}
         </motion.button>
 
         <p className="text-toss-sub text-sm mt-5 leading-relaxed">
-          결과를 친구에게 공유하고 순위를 비교해보세요
+          친구와 함께 두뇌 점수를 겨뤄 보세요
         </p>
 
         {sharedPercentile && (

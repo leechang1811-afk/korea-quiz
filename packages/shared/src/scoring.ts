@@ -31,11 +31,11 @@ export function computeRunScore(perStageScores: { score: number }[]): number {
 }
 
 const GAME_LABELS: Record<GameType, string> = {
-  REACTION: '반응 속도',
-  TAP10: '10초 터치',
-  MEMORY: '기억력',
-  CALCULATION: '계산 속도',
-  PAINT: '물감 색깔 (색 혼합 추론)',
+  REACTION: '민첩성',
+  TAP10: '순발력',
+  MEMORY: '집중력',
+  CALCULATION: '논리력',
+  PAINT: '시각 추론',
 };
 
 /** 약점별 개선 팁 */

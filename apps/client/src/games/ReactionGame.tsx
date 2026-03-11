@@ -16,6 +16,14 @@ const COLOR_MAP: Record<ReactionColor, string> = {
   Yellow: '#EAB308',
 };
 
+const COLOR_LABELS_KO: Record<ReactionColor, string> = {
+  Red: '빨강',
+  Blue: '파랑',
+  Green: '초록',
+  Purple: '보라',
+  Yellow: '노랑',
+};
+
 interface ReactionGameProps {
   level: number;
   onSuccess: (score: number) => void;
@@ -117,10 +125,10 @@ export default function ReactionGame({ level, onSuccess, onFail }: ReactionGameP
             className="w-full max-w-md text-center"
           >
             <p className="text-lg font-medium text-toss-text mb-6">
-              {targetColor}를 선택하세요
+              {targetColor && COLOR_LABELS_KO[targetColor]}일 때 탭하세요
             </p>
             <p className="text-toss-sub text-sm mb-4">
-              색이 {targetColor}일 때 도형을 탭하세요
+              도형이 {targetColor && COLOR_LABELS_KO[targetColor]}색으로 바뀌면 탭하세요
             </p>
             <div className="flex justify-center gap-2 mb-6">
               <span className="text-toss-sub">제한시간</span>

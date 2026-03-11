@@ -43,7 +43,10 @@ export default function MyStats() {
       <div className="max-w-md mx-auto">
         <h1 className="text-xl font-bold text-toss-text mb-6">내 기록</h1>
         {loading ? (
-          <p className="text-toss-sub">불러오는 중...</p>
+          <div className="py-12 flex flex-col items-center justify-center gap-4">
+            <div className="w-10 h-10 border-2 border-toss-blue border-t-transparent rounded-full animate-spin" />
+            <p className="text-toss-sub">불러오는 중...</p>
+          </div>
         ) : (
           <div className="space-y-4">
             {streakCount > 0 && (
@@ -52,8 +55,8 @@ export default function MyStats() {
                 animate={{ opacity: 1, y: 0 }}
                 className="p-4 rounded-2xl bg-amber-50 border border-amber-200"
               >
-                <p className="text-amber-700 text-sm font-medium">🔥 연속 도전</p>
-                <p className="text-xl font-bold text-amber-700">{streakCount}일</p>
+                <p className="text-amber-700 text-sm font-medium">🔥 두뇌 건강 지키기</p>
+                <p className="text-xl font-bold text-amber-700">{streakCount}일차</p>
                 {(canExtend || !playedToday) && streakCount > 0 && (
                   <p className="text-amber-600 text-xs mt-1">
                     {canExtend ? '오늘 도전하면 유지돼요!' : '오늘도 수고했어요!'}
@@ -133,7 +136,7 @@ export default function MyStats() {
           whileTap={{ scale: 0.99 }}
           className="mt-3 w-full py-3.5 rounded-2xl bg-toss-blue text-white font-semibold"
         >
-          {canExtend && streakCount > 0 ? '🔥 스트릭 지키러 가기' : '한 번 더 도전!'}
+          {canExtend && streakCount > 0 ? '🔥 오늘도 지키기' : '한 번 더 도전!'}
         </motion.button>
       </div>
     </div>

@@ -112,7 +112,8 @@ export default function RecordAndRank() {
         <h1 className="text-2xl font-bold text-toss-text mb-6">기록 & 순위</h1>
 
         {loading ? (
-          <div className="py-12 text-center">
+          <div className="py-12 flex flex-col items-center justify-center gap-4">
+            <div className="w-10 h-10 border-2 border-toss-blue border-t-transparent rounded-full animate-spin" />
             <p className="text-toss-sub">불러오는 중...</p>
           </div>
         ) : fetchError ? (
@@ -145,7 +146,7 @@ export default function RecordAndRank() {
                 <p className="mt-1 text-white/90 text-sm">
                   {(bestScore ?? 0).toLocaleString()}점 {meData?.best_level != null && `· ${meData.best_level}단계`}
                 </p>
-                {streakCount > 0 && <p className="text-white/90 text-sm mt-0.5">🔥 {streakCount}일 연속</p>}
+                {streakCount > 0 && <p className="text-white/90 text-sm mt-0.5">🔥 두뇌 건강 지키기 {streakCount}일차</p>}
                 <button
                   type="button"
                   onClick={handleCopyLink}
@@ -173,7 +174,18 @@ export default function RecordAndRank() {
               >
                 <p className="text-5xl mb-2">🏆</p>
                 <p className="text-xl font-bold text-toss-text mb-1">아직 기록이 없어요</p>
-                <p className="text-toss-sub text-sm">첫 도전을 해보세요!</p>
+                <p className="text-toss-sub text-sm mb-5">첫 도전을 해보세요!</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    endRun();
+                    useGameStore.getState().startRun();
+                    navigate('/run');
+                  }}
+                  className="px-6 py-3 rounded-2xl bg-toss-blue text-white font-semibold hover:opacity-90 transition"
+                >
+                  지금 도전하기
+                </button>
               </motion.div>
             )}
 
@@ -210,7 +222,7 @@ export default function RecordAndRank() {
                 animate={{ y: 0, opacity: 1 }}
                 className="flex items-center justify-between rounded-2xl bg-amber-50 border border-amber-100 px-5 py-4"
               >
-                <span className="text-amber-700 font-semibold">🔥 {streakCount}일 연속</span>
+                <span className="text-amber-700 font-semibold">🔥 두뇌 건강 지키기 {streakCount}일차</span>
                 <span className="text-amber-600 text-sm">{canExtend ? '오늘 유지해요!' : '수고했어요!'}</span>
               </motion.div>
             )}
@@ -287,7 +299,7 @@ export default function RecordAndRank() {
                 whileTap={{ scale: 0.99 }}
                 className="w-full py-4 rounded-2xl bg-toss-blue text-white font-bold text-lg shadow-lg shadow-toss-blue/30"
               >
-                {canExtend && streakCount > 0 ? '🔥 스트릭 지키기' : '나도 순위 올리기!'}
+                {canExtend && streakCount > 0 ? '🔥 오늘도 지키기' : '나도 순위 올리기!'}
               </motion.button>
               <button onClick={() => navigate('/')} className="w-full py-3 rounded-2xl text-toss-sub font-medium">
                 홈으로

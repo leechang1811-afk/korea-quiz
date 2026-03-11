@@ -10,13 +10,13 @@ export interface ShareResultData {
 }
 
 const APP_URL = typeof window !== 'undefined' ? window.location.origin : '';
-const APP_TITLE = '한국인 상위 몇%?';
+const APP_TITLE = '내 두뇌 점수는 상위 몇%?';
 
 function getShareText(data: ShareResultData): string {
   if (data.isChampion) {
-    return `한국인 상위 0.1%! 🎉 20단계 모두 달성했어요. 총점 ${data.runScore.toLocaleString()}점`;
+    return `내 두뇌 점수는 상위 0.1%! 🎉 20단계 모두 달성했어요. 총점 ${data.runScore.toLocaleString()}점`;
   }
-  return `한국인 상위 ${data.percentileTop}%! 총점 ${data.runScore.toLocaleString()}점, ${data.maxLevel}단계 도전`;
+  return `내 두뇌 점수는 상위 ${data.percentileTop}%! 총점 ${data.runScore.toLocaleString()}점, ${data.maxLevel}단계 도전`;
 }
 
 export function getShareUrl(percentile?: number): string {
@@ -29,7 +29,7 @@ export function getShareUrl(percentile?: number): string {
 
 /** 상위 N% 공유용 - 친구가 링크 클릭 시 ?p=N으로 유입 */
 export function getShareTextPercentile(percentileTop: number): string {
-  return `나는 한국인 중 상위 ${percentileTop}%! 🏆 너도 해봐!`;
+  return `내 두뇌 점수는 상위 ${percentileTop}%! 🏆 너도 해봐!`;
 }
 
 /** Load Kakao SDK script */
@@ -97,11 +97,8 @@ export function shareToX(data: ShareResultData): void {
 
 /** 링크 복사 (결과/기록 페이지 공통) - 카카오/X/인스타 대신 링크만 복사 */
 export async function copyShareLink(data: ShareResultData): Promise<void> {
-  const text = data.isChampion
-    ? `한국인 상위 0.1%! 🎉 20단계 모두 달성했어요. 총점 ${data.runScore.toLocaleString()}점`
-    : `한국인 상위 ${data.percentileTop}%! 총점 ${data.runScore.toLocaleString()}점, ${data.maxLevel}단계 도전`;
-  const url = getShareUrl(data.percentileTop);
-  await navigator.clipboard.writeText(`${text}\n${url}`);
+  const text = getShareText(data);
+  await navigator.clipboard.writeText(`${text}\n${getShareUrl(data.percentileTop)}`);
 }
 
 /** Generate shareable image and share via Web Share API or download */

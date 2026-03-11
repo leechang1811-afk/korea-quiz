@@ -387,9 +387,7 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                 <span className="font-medium text-toss-blue">{timeLeft}초</span>
               </div>
               <p className="text-toss-sub text-xs mb-2 text-center">
-                {params.mixCount === 2
-                  ? '물감 2개를 클릭해 섞으세요'
-                  : `물감 ${params.mixCount}개를 클릭해 섞어 목표색을 맞추세요`}
+                물감 {params.mixCount}개를 섞어 목표색을 맞추세요
               </p>
               {timeLeft <= 10 && timeLeft > 0 && targetColor && (
                 <p className="text-amber-600 text-xs mb-2 text-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
@@ -492,9 +490,7 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                   </div>
                 ) : (
                   <p className="text-toss-sub text-sm">
-                    {params.mixCount === 2
-                      ? '물감 2개를 클릭해 섞으세요'
-                      : `물감 ${params.mixCount}개를 클릭해 섞으세요`}
+                    물감 {params.mixCount}개를 섞어 목표색을 맞추세요
                   </p>
                 )}
               </div>

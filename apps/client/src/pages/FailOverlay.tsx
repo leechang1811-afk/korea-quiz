@@ -46,7 +46,7 @@ export default function FailOverlay({ canRevive, failedLevel = 0, maxLevel = 20,
         </p>
         {progressPct >= 50 && (
           <p className="text-center text-toss-blue text-xs mb-4">
-            전체의 {progressPct}% 완주! 끝까지 가고 싶지 않나요?
+            전체의 {progressPct}% 완주! 한 번 더 도전해 보시겠어요?
           </p>
         )}
         <div className="flex flex-col gap-3">

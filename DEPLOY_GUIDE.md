@@ -88,11 +88,24 @@
 
 | Name | Value |
 |------|-------|
-| `VITE_API_URL` | `https://(Railway 도메인)/api` |
+| `VITE_API_URL` | `https://(Render 도메인)/api` |
 
-예: `https://korea-quiz-production.up.railway.app/api`
+예: `https://korea-quiz-api.onrender.com/api`
 
 4. **Save** 후 **Redeploy** (최상단 Deployments → ... → Redeploy)
+
+### 3-3. Vercel CLI로 배포 (선택)
+
+```bash
+# 로그인 (처음 1회)
+npx vercel login
+
+# 배포 (프리뷰)
+npx vercel
+
+# 프로덕션 배포
+npx vercel --prod
+```
 
 ---
 

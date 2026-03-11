@@ -129,7 +129,7 @@ export default function PassOverlay({
           transition={{ delay: 0.05 }}
           className="text-lg font-medium text-toss-text mb-2"
         >
-          {comboCount >= 2 ? '콤보 펑! 터졌어요!' : '통과입니다!'}
+          {comboCount >= 2 ? '연속 성공!' : '통과입니다!'}
         </motion.p>
 
         {difficultyMsg && (

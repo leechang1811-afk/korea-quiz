@@ -47,8 +47,7 @@ export default function ResultGate() {
         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
         className="w-10 h-10 border-2 border-toss-blue border-t-transparent rounded-full"
       />
-      <p className="text-toss-sub text-sm">결과 준비 중...</p>
-      <p className="text-toss-sub text-xs">잠시만요!</p>
+      <p className="text-toss-sub text-sm">결과를 불러오는 중이에요</p>
     </div>
   );
 }
