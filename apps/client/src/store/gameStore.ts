@@ -14,6 +14,7 @@ export interface RunState {
   failed: boolean;
   comboCount: number;
   lastAddedScore?: number; // 통과 시 추가된 점수 (팡팡 애니용)
+  lastAddedBonus?: number; // 3초 보너스 등 (따로 빵빵 터짐)
 }
 
 export interface CompletedRunData {
@@ -28,7 +29,7 @@ interface GameStore {
   lastCompletedRun: CompletedRunData | null;
   userHash: string | null;
   startRun: () => void;
-  nextLevel: (result: PerStageResult) => void;
+  nextLevel: (result: PerStageResult, bonus?: number) => void;
   failRun: () => void;
   triggerFail: () => void;
   useRevive: () => void;
@@ -85,7 +86,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  nextLevel: (result) => {
+  nextLevel: (result, bonus: number = 0) => {
     const { run } = get();
     if (!run) return;
     const breakdown = { ...run.gameBreakdown };
@@ -93,9 +94,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const prev = breakdown[k] ?? 0;
     const count = run.perStageResults.filter((r) => r.game_type === k).length + 1;
     breakdown[k] = (prev * (count - 1) + result.score) / count;
-    const added = Math.round(result.score);
+    const added = Math.round(result.score); // base + bonus
     const newCumulative = run.cumulativeScore + added;
     const newCombo = result.success ? (run.comboCount ?? 0) + 1 : 0;
+    const baseAdded = added - bonus; // 표시용: 기본점수
     set({
       run: {
         ...run,
@@ -106,7 +108,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         gameBreakdown: breakdown,
         isRevivedLevel: false,
         comboCount: newCombo,
-        lastAddedScore: result.success ? added : undefined,
+        lastAddedScore: result.success ? baseAdded : undefined,
+        lastAddedBonus: result.success && bonus > 0 ? bonus : undefined,
       },
     });
   },
@@ -170,8 +173,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   clearLastAddedScore: () => {
     const { run } = get();
-    if (run && run.lastAddedScore != null) {
-      set({ run: { ...run, lastAddedScore: undefined } });
+    if (run && (run.lastAddedScore != null || run.lastAddedBonus != null)) {
+      set({ run: { ...run, lastAddedScore: undefined, lastAddedBonus: undefined } });
     }
   },
 }));

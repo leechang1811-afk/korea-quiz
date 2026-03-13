@@ -8,7 +8,7 @@ import {
 import type { GameType } from 'shared';
 import { isMuted, toggleMuted } from '../services/sounds';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fireScoreBurst } from '../utils/confetti';
+import { fireScoreBurst, fireBonusBurst } from '../utils/confetti';
 
 function getTimeLimitForGame(gameType: GameType, level: number): number {
   switch (gameType) {
@@ -30,6 +30,7 @@ interface StageHeaderProps {
   comboCount?: number;
   remainingRevives?: number; // 남은 부활 횟수 (0~2)
   lastAddedScore?: number;
+  lastAddedBonus?: number;
   onClearLastAddedScore?: () => void;
 }
 
@@ -40,10 +41,12 @@ export default function StageHeader({
   comboCount = 0,
   remainingRevives = 0,
   lastAddedScore = 0,
+  lastAddedBonus = 0,
   onClearLastAddedScore,
 }: StageHeaderProps) {
   const [muted, setMuted] = useState(() => isMuted());
   const prevAddedRef = useRef<number>(0);
+  const prevBonusRef = useRef<number>(0);
   const timeLimit = getTimeLimitForGame(gameType, level);
   const gameIndex = ['REACTION', 'TAP10', 'MEMORY', 'CALCULATION', 'PAINT'].indexOf(gameType) + 1;
 
@@ -51,13 +54,20 @@ export default function StageHeader({
     if (lastAddedScore > 0 && lastAddedScore !== prevAddedRef.current) {
       prevAddedRef.current = lastAddedScore;
       fireScoreBurst();
+    }
+    if (lastAddedBonus > 0 && lastAddedBonus !== prevBonusRef.current) {
+      prevBonusRef.current = lastAddedBonus;
+      fireBonusBurst();
+    }
+    if ((lastAddedScore > 0 || lastAddedBonus > 0)) {
       const t = setTimeout(() => {
         onClearLastAddedScore?.();
         prevAddedRef.current = 0;
-      }, 1500);
+        prevBonusRef.current = 0;
+      }, 2000);
       return () => clearTimeout(t);
     }
-  }, [lastAddedScore, onClearLastAddedScore]);
+  }, [lastAddedScore, lastAddedBonus, onClearLastAddedScore]);
 
   const handleMuteToggle = () => {
     setMuted(toggleMuted());
@@ -118,18 +128,23 @@ export default function StageHeader({
                 누적 점수 {cumulativeScore}
               </span>
               <AnimatePresence>
-                {lastAddedScore != null && lastAddedScore > 0 && (
+                {(lastAddedScore != null && lastAddedScore > 0) || (lastAddedBonus != null && lastAddedBonus > 0) ? (
                   <motion.span
-                    key={lastAddedScore}
+                    key={`add-${lastAddedScore ?? 0}-${lastAddedBonus ?? 0}`}
                     initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1.3, opacity: 1 }}
-                    exit={{ scale: 1.5, opacity: 0 }}
-                    transition={{ type: 'spring', damping: 12 }}
-                    className="absolute -top-1 -right-1 px-2 py-0.5 rounded-full bg-amber-400 text-amber-900 font-bold text-xs shadow-lg border-2 border-amber-500"
+                    animate={{ scale: 1.1, opacity: 1 }}
+                    exit={{ scale: 1.2, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 14 }}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-toss-blue/10 text-toss-blue font-bold text-xs border border-toss-blue/30"
                   >
-                    +{lastAddedScore}
+                    {lastAddedScore != null && lastAddedScore > 0 && (
+                      <span>+{lastAddedScore}</span>
+                    )}
+                    {lastAddedBonus != null && lastAddedBonus > 0 && (
+                      <span className="text-amber-600">+{lastAddedBonus}</span>
+                    )}
                   </motion.span>
-                )}
+                ) : null}
               </AnimatePresence>
             </div>
           </div>

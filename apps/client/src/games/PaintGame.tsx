@@ -75,11 +75,13 @@ function getBaseColorsForTarget(target: PaintColor): PaintColor[] {
   return expand[target] ?? [target];
 }
 
-/** 섞어야 할 색 전부 초성으로 → "ㅃㄱ+ㅍㄹ+ㅊㄹ을 섞으세요" */
+/** 섞어야 할 색 전부 초성으로 → "ㅃㄱ+ㅍㄹ을 섞으세요" (2색만) */
 function getHintForColor(target: PaintColor): string {
   const colors = getBaseColorsForTarget(target);
   if (colors.length <= 1) return '기본색을 섞어보세요';
-  const abbrevs = colors.map((c) => COLOR_ABBREV[c]).join('+');
+  // 2색만 사용: W,K 등 3색 이상은 2색 조합으로 축약
+  const twoColors = colors.length > 2 ? [colors[0], colors[1]] : colors;
+  const abbrevs = twoColors.map((c) => COLOR_ABBREV[c!]).join('+');
   return `${abbrevs}을 섞으세요`;
 }
 
@@ -213,6 +215,9 @@ interface FallingDrop extends Drop {
 
 const POOL_TOP = 400;
 
+/** 물감 게임은 항상 2색만 섞기 (고정) */
+const REQUIRED_MIX_COUNT = 2;
+
 export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) {
   const params = getPaintParams(level);
   const timeLimit = paintTimeLimitForLevel(level);
@@ -235,13 +240,12 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
 
   const showColorLabels = level <= 6;
   const showFormulaHint = level <= 2;
-  const tipMessage = level === 1 ? '빨강·초록·파랑을 섞어 새로운 색을 만드세요' : null;
+  const tipMessage = level === 1 ? '2색을 섞어 목표색을 맞추세요 (예: 빨강+초록=노랑)' : null;
 
-  // mixCount에 따라 목표색 선택 (2색→Y,M,C / 3색→O,L,P,T / 4색+→K) — 흰색 제외
-  const getTargetForMixCount = useCallback((mixCount: number): PaintColor => {
-    if (mixCount <= 2) return (['Y', 'M', 'C'] as const)[Math.floor(Math.random() * 3)]! as PaintColor;
-    if (mixCount === 3) return (['O', 'L', 'P', 'T'] as const)[Math.floor(Math.random() * 4)]! as PaintColor;
-    return 'K' as PaintColor;
+  // 2색 혼합으로 만들 수 있는 목표색 (Y,M,C,O,L,T)
+  const TWO_COLOR_TARGETS: PaintColor[] = ['Y', 'M', 'C', 'O', 'L', 'T'];
+  const getTargetForTwoColors = useCallback((): PaintColor => {
+    return TWO_COLOR_TARGETS[Math.floor(Math.random() * TWO_COLOR_TARGETS.length)]!;
   }, []);
 
   const startGame = useCallback(() => {
@@ -251,13 +255,13 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
     handledIdsRef.current = new Set();
     selectedDropsRef.current = [];
     setMergeFeedback(null);
-    const target = getTargetForMixCount(params.mixCount);
+    const target = getTargetForTwoColors();
     targetColorRef.current = target;
     setTargetColor(target);
     setSelectedDrops([]);
     setFallingDrops([]);
     setPhase('instruction');
-  }, [params.mixCount, getTargetForMixCount]);
+  }, [getTargetForTwoColors]);
 
   useLayoutEffect(() => {
     startGame();
@@ -275,16 +279,25 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
     return () => clearTimeout(t);
   }, [phase, timeLimit]);
 
-  // Spawn falling drops periodically
+  // Spawn falling drops periodically (필수 색상 가중: 목표에 필요한 색이 더 자주 나옴)
   useEffect(() => {
     if (phase !== 'playing' || hasEndedRef.current) return;
     const container = containerRef.current;
     const width = container?.clientWidth ?? 300;
+    const baseSet = new Set(params.baseColors);
+    const target = targetColorRef.current;
+    const needed = target ? [...new Set(getBaseColorsForTarget(target))] : [];
+    const requiredColors = needed.filter((c) => baseSet.has(c as (typeof params.baseColors)[number]));
     const spawn = () => {
       if (hasEndedRef.current) return;
-      const color = params.baseColors[
-        Math.floor(Math.random() * params.baseColors.length)
-      ]!;
+      let color: PaintColor;
+      if (requiredColors.length >= 2 && Math.random() < 0.65) {
+        color = requiredColors[Math.floor(Math.random() * requiredColors.length)]!;
+      } else {
+        color = params.baseColors[
+          Math.floor(Math.random() * params.baseColors.length)
+        ]!;
+      }
       const x = 24 + Math.random() * Math.max(0, width - 96);
       const id = ++dropIdRef.current;
       setFallingDrops((prev) => [...prev, { id, color, x, startY: 0 }]);
@@ -294,62 +307,55 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
     return () => clearInterval(interval);
   }, [phase, params.baseColors, params.dropIntervalMs]);
 
+  const doSuccess = useCallback(() => {
+    const elapsed = (Date.now() - startTimeRef.current) / 1000;
+    const baseRawScore = Math.max(0, 100 - elapsed * 3);
+    const bonusAmount = elapsed < 3 ? Math.min(20, 10 + Math.min(level, 10)) : 0;
+    const baseScore = normalizeStageScore(baseRawScore, 100, true);
+    setTimeout(() => onSuccess(baseScore, bonusAmount), 500);
+  }, [level, onSuccess]);
+
   const handleDropClicked = useCallback(
     (id: number, color: PaintColor, x: number) => {
       if (handledIdsRef.current.has(id) || hasEndedRef.current) return;
       handledIdsRef.current.add(id);
       setFallingDrops((prev) => prev.filter((d) => d.id !== id));
 
-      const mixCount = params.mixCount;
       const prevSelected = selectedDropsRef.current;
-      const newSelected = [...prevSelected, { id, color, x }];
+      const newSelected = [...prevSelected, { id, color, x }].slice(0, REQUIRED_MIX_COUNT);
       selectedDropsRef.current = newSelected;
       setSelectedDrops(newSelected);
 
-      if (newSelected.length < mixCount) {
-        return;
-      }
-
-      // mixCount개 모임 → 한 번에 혼합
-      selectedDropsRef.current = [];
-      setSelectedDrops([]);
+      if (newSelected.length < REQUIRED_MIX_COUNT) return;
 
       const colors = newSelected.map((d) => d.color);
       const mixed = mixColors(colors);
+      const target = targetColorRef.current;
+
+      selectedDropsRef.current = [];
+      setSelectedDrops([]);
 
       if (!mixed) {
         playFail();
         setMergeFeedback('cannot_mix');
-        setTimeout(() => {
-          setMergeFeedback(null);
-        }, 1500);
+        setTimeout(() => setMergeFeedback(null), 1500);
         return;
       }
 
-      const target = targetColorRef.current;
       if (target && mixed === target) {
         playSuccess();
         hasEndedRef.current = true;
         burstingRef.current = true;
         setMergeFeedback('correct');
         setBursting(true);
-        const elapsed = (Date.now() - startTimeRef.current) / 1000;
-        let rawScore = Math.max(0, 100 - elapsed * 3);
-        let bonusAmount = 0;
-        // 3초 이내 해결 시 보너스 (레벨별 +10~+20)
-        if (elapsed < 3) {
-          bonusAmount = Math.min(20, 10 + Math.min(level, 10));
-          rawScore = Math.min(100, rawScore + bonusAmount);
-        }
-        const score = normalizeStageScore(rawScore, 100, true);
-        setTimeout(() => onSuccess(score, bonusAmount), 500);
+        doSuccess();
       } else {
         playFail();
         setMergeFeedback('wrong');
         setTimeout(() => setMergeFeedback(null), 1500);
       }
     },
-    [params.mixCount, level, onSuccess]
+    [doSuccess]
   );
 
   const handleDropMissed = useCallback((id: number) => {
@@ -439,7 +445,7 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                 </p>
               )}
               <p className="text-toss-sub text-xs mb-2 text-center">
-                물감 {params.mixCount}개를 섞어 목표색을 맞추세요
+                물감 2개를 골라 섞어 목표색을 맞추세요
               </p>
               {showFormulaHint && targetColor && (
                 <p className="text-amber-600 text-sm mb-2 text-center font-medium bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
@@ -482,7 +488,7 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                       animate={
                         bursting
                           ? { scale: 2.5, opacity: 0 }
-                          : { y: POOL_TOP - 20, scale: 1, opacity: 1 }
+                          : { y: POOL_TOP - 20, scale: params.dropScale, opacity: 1 }
                       }
                       transition={
                         bursting
@@ -494,8 +500,8 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                       style={{
                         left: d.x,
                         top: 0,
-                        width: 72,
-                        height: 80,
+                        width: Math.round(72 * params.dropScale),
+                        height: Math.round(80 * params.dropScale),
                         marginLeft: -14,
                         marginTop: -12,
                         touchAction: 'manipulation',
@@ -570,14 +576,14 @@ export default function PaintGame({ level, onSuccess, onFail }: PaintGameProps) 
                       </motion.div>
                     ))}
                     <span className="text-toss-sub text-sm self-center">
-                      {selectedDrops.length < params.mixCount
-                        ? `+ ${params.mixCount - selectedDrops.length}개 더 클릭`
+                      {selectedDrops.length < REQUIRED_MIX_COUNT
+                        ? `+ ${REQUIRED_MIX_COUNT - selectedDrops.length}개 더 클릭`
                         : '→ 섞는 중...'}
                     </span>
                   </div>
                 ) : (
                   <p className="text-toss-sub text-sm">
-                    물감 {params.mixCount}개를 섞어 목표색을 맞추세요
+                    물감 2개를 골라 섞어 목표색을 맞추세요
                   </p>
                 )}
               </div>

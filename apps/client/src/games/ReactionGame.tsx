@@ -119,14 +119,10 @@ export default function ReactionGame({ level, onSuccess, onFail }: ReactionGameP
     }
     playSuccess();
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    let rawScore = Math.max(0, 100 - elapsed * 2);
-    let bonusAmount = 0;
-    if (elapsed < 3) {
-      bonusAmount = Math.min(20, 10 + Math.min(level, 10));
-      rawScore = Math.min(100, rawScore + bonusAmount);
-    }
-    const score = normalizeStageScore(rawScore, 100, true);
-    onSuccess(score, bonusAmount);
+    const baseRawScore = Math.max(0, 100 - elapsed * 2);
+    const bonusAmount = elapsed < 3 ? Math.min(20, 10 + Math.min(level, 10)) : 0;
+    const baseScore = normalizeStageScore(baseRawScore, 100, true);
+    onSuccess(baseScore, bonusAmount);
   };
 
   return (

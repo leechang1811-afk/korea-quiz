@@ -88,3 +88,11 @@ export function fireScoreBurst(): void {
   confetti({ particleCount: 18, spread: 55, origin: { x: 0.85, y: 0.12 }, colors: burstColors, scalar: 1.1, ticks: 100 });
   confetti({ particleCount: 12, spread: 45, origin: { x: 0.9, y: 0.15 }, angle: 90, colors: burstColors, scalar: 0.9, ticks: 80 });
 }
+
+/** 보너스 점수 빵빵 터지는 골드 burst */
+export function fireBonusBurst(): void {
+  const goldColors = ['#FBBF24', '#F59E0B', '#FCD34D', '#FDE68A', '#EAB308'];
+  confetti({ particleCount: 35, spread: 70, origin: { x: 0.85, y: 0.1 }, colors: goldColors, scalar: 1.4, ticks: 120 });
+  confetti({ particleCount: 25, spread: 60, origin: { x: 0.88, y: 0.08 }, angle: 90, colors: goldColors, scalar: 1.2, ticks: 100 });
+  confetti({ particleCount: 20, spread: 80, origin: { x: 0.82, y: 0.12 }, colors: goldColors, scalar: 1.0, ticks: 90 });
+}

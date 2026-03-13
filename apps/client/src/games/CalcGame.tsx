@@ -68,14 +68,10 @@ export default function CalcGame({ level, onSuccess, onFail }: CalcGameProps) {
 
   const reportSuccess = () => {
     const elapsed = (Date.now() - questionStartRef.current) / 1000;
-    let rawScore = 100;
-    let bonusAmount = 0;
-    if (elapsed < 3) {
-      bonusAmount = Math.min(20, 10 + Math.min(level, 10));
-      rawScore = Math.min(100, rawScore + bonusAmount);
-    }
-    const score = normalizeStageScore(rawScore, 100, true);
-    onSuccess(score, bonusAmount);
+    const baseRawScore = 100;
+    const bonusAmount = elapsed < 3 ? Math.min(20, 10 + Math.min(level, 10)) : 0;
+    const baseScore = normalizeStageScore(baseRawScore, 100, true);
+    onSuccess(baseScore, bonusAmount);
   };
 
   const handleSubmit = () => {

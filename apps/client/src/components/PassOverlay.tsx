@@ -50,16 +50,17 @@ export default function PassOverlay({
     ['잘하셨어요!', '완벽해요!', '대단해요!', '굿!', '수준이에요!'][Math.floor(Math.random() * 5)]!
   );
 
-  // DB 기반 퍼센타일 조회
+  // DB 기반 퍼센타일 조회 (기본점수 + 보너스 반영)
+  const stageTotal = Math.round(pendingScore) + pendingBonus;
   useEffect(() => {
-    const currentScore = calcNextStageScore(perStageResults, pendingScore);
-    const nextScore = calcWithNextStage(perStageResults, pendingScore, 80);
+    const currentScore = calcNextStageScore(perStageResults, stageTotal);
+    const nextScore = calcWithNextStage(perStageResults, stageTotal, 80);
     getPercentilePreview(currentScore, nextScore)
       .then(({ currentPercentile, nextPercentile }) =>
         setPercentile({ current: currentPercentile, next: nextPercentile })
       )
       .catch(() => setPercentile({ current: 50, next: 45 }));
-  }, [perStageResults, pendingScore]);
+  }, [perStageResults, stageTotal]);
 
   useEffect(() => {
     if (count <= 0) {
@@ -141,11 +142,11 @@ export default function PassOverlay({
           className="mb-2 space-y-1"
         >
           <p className="text-base font-bold text-toss-blue">
-            이번 스테이지 +{Math.round(pendingScore)}점
+            이번 스테이지 +{stageTotal}점
           </p>
           {pendingBonus > 0 && (
             <p className="text-sm font-bold text-amber-600 animate-pulse">
-              ⚡ 3초 보너스 +{pendingBonus}점!
+              ⚡ 3초 보너스 +{pendingBonus}점 포함!
             </p>
           )}
         </motion.div>

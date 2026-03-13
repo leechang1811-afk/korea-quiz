@@ -97,14 +97,10 @@ export default function MemoryGame({ level, onSuccess, onFail }: MemoryGameProps
     }
     playSuccess();
     const elapsed = (Date.now() - answerStartRef.current) / 1000;
-    let rawScore = (match / correct) * 100;
-    let bonusAmount = 0;
-    if (elapsed < 3) {
-      bonusAmount = Math.min(20, 10 + Math.min(level, 10));
-      rawScore = Math.min(100, rawScore + bonusAmount);
-    }
-    const score = normalizeStageScore(rawScore, 100, true);
-    onSuccess(score, bonusAmount);
+    const baseRawScore = (match / correct) * 100;
+    const bonusAmount = elapsed < 3 ? Math.min(20, 10 + Math.min(level, 10)) : 0;
+    const baseScore = normalizeStageScore(baseRawScore, 100, true);
+    onSuccess(baseScore, bonusAmount);
   };
 
   const handleSubmit = () => {
@@ -114,14 +110,10 @@ export default function MemoryGame({ level, onSuccess, onFail }: MemoryGameProps
       if (userInput.trim() === target) {
         playSuccess();
         const elapsed = (Date.now() - answerStartRef.current) / 1000;
-        let rawScore = 100;
-        let bonusAmount = 0;
-        if (elapsed < 3) {
-          bonusAmount = Math.min(20, 10 + Math.min(level, 10));
-          rawScore = Math.min(100, rawScore + bonusAmount);
-        }
-        const score = normalizeStageScore(rawScore, 100, true);
-        onSuccess(score, bonusAmount);
+        const baseRawScore = 100;
+        const bonusAmount = elapsed < 3 ? Math.min(20, 10 + Math.min(level, 10)) : 0;
+        const baseScore = normalizeStageScore(baseRawScore, 100, true);
+        onSuccess(baseScore, bonusAmount);
       } else {
         playFail();
         onFail();

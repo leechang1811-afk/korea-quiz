@@ -25,11 +25,11 @@ export default function Run() {
     useRevive,
     confirmGameOver,
     getCurrentGameType,
-    getCumulativeScore,
     getComboCount,
     setUserHash,
   } = useGameStore();
   const lastCompletedRun = useGameStore((s) => s.lastCompletedRun);
+  const cumulativeScore = useGameStore((s) => s.run?.cumulativeScore ?? 0);
 
   useEffect(() => {
     ensureUserHash().then(setUserHash);
@@ -47,7 +47,6 @@ export default function Run() {
   }, [run, lastCompletedRun, navigate, startRun]);
 
   const gameType = getCurrentGameType();
-  const cumulativeScore = getCumulativeScore();
   const level = run?.level ?? 1;
   const showFailOverlay = run?.failed ?? false;
   const [showDifficultyUpgrade, setShowDifficultyUpgrade] = useState(false);
@@ -55,6 +54,7 @@ export default function Run() {
   const [showPassOverlay, setShowPassOverlay] = useState(false);
   const [pendingScore, setPendingScore] = useState<number | null>(null);
   const [pendingBonus, setPendingBonus] = useState<number>(0);
+  const [passedLevelForOverlay, setPassedLevelForOverlay] = useState(1);
   const hasShownUpgradeRef = useRef(false);
   const hasShownUpperLevelRef = useRef(false);
 
@@ -79,6 +79,7 @@ export default function Run() {
   const handleSuccess = (score: number, bonus: number = 0) => {
     const gt = getCurrentGameType();
     if (!gt || !run) return;
+    setPassedLevelForOverlay(level);
     setPendingScore(score);
     setPendingBonus(bonus);
     setShowPassOverlay(true);
@@ -88,24 +89,25 @@ export default function Run() {
     } else {
       fireSuccess(level);
     }
+    // 즉시 nextLevel 호출 → 누적점수(기본+보너스)가 바로 반영됨
+    const r = useGameStore.getState().run;
+    const effectiveLevel = r?.isRevivedLevel ? Math.max(1, (r?.level ?? 1) - 1) : level;
+    const totalScore = Math.round(score) + bonus;
+    nextLevel(
+      {
+        game_type: gt,
+        level: effectiveLevel,
+        success: true,
+        score: totalScore,
+      },
+      bonus
+    );
   };
 
   const handlePassComplete = () => {
-    const score = pendingScore;
     setShowPassOverlay(false);
     setPendingScore(null);
     setPendingBonus(0);
-    if (score === null) return;
-    const gt = getCurrentGameType();
-    const r = useGameStore.getState().run;
-    if (!gt || !r) return;
-    const effectiveLevel = r.isRevivedLevel ? Math.max(1, r.level - 1) : r.level;
-    nextLevel({
-      game_type: gt,
-      level: effectiveLevel,
-      success: true,
-      score,
-    });
     const nextRun = useGameStore.getState().run;
     if (nextRun && nextRun.level > 20) {
       useGameStore.getState().confirmGameOver();
@@ -166,6 +168,7 @@ export default function Run() {
         comboCount={getComboCount()}
         remainingRevives={2 - (run.usedReviveCount ?? 0)}
         lastAddedScore={run.lastAddedScore}
+        lastAddedBonus={run.lastAddedBonus}
         onClearLastAddedScore={useGameStore.getState().clearLastAddedScore}
       />
       {showDifficultyUpgrade ? (
@@ -242,7 +245,7 @@ export default function Run() {
 
       {showPassOverlay && pendingScore !== null && run && (
         <PassOverlay
-          passedLevel={level}
+          passedLevel={passedLevelForOverlay}
           perStageResults={run.perStageResults.map((r) => ({ score: r.score }))}
           pendingScore={pendingScore}
           pendingBonus={pendingBonus}
